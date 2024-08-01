@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from .core import config
 from app.routers import backTask
 
 app = FastAPI()

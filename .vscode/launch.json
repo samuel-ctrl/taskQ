@@ -1,19 +1,45 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
     "configurations": [
         {
-            "name": "Docker: Python - Fastapi",
-            "type": "docker",
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
             "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "python": {
-                "pathMappings": [
-                    {
-                        "localRoot": "${workspaceFolder}",
-                        "remoteRoot": "/app"
-                    }
-                ],
-                "projectType": "fastapi"
-            }
+            "module": "uvicorn",
+            "args": [
+                "main:app",
+                "--reload"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}/app",
+                "CELERY_BROKER_URL": "redis://localhost:6379/0",
+                "CELERY_RESULT_BACKEND": "redis://localhost:6379/0"
+            },
+            "jinja": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Celery Worker",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}/app",
+                "CELERY_BROKER_URL": "redis://localhost:6379/0",
+                "CELERY_RESULT_BACKEND": "redis://localhost:6379/0"
+            },
+            "args": [
+                "-A",
+                "worker.celery",
+                "worker",
+                "--loglevel=info",
+                "--logfile=project/logs/celery.log"
+            ],
         }
     ]
 }

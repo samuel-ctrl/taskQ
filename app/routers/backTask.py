@@ -1,15 +1,11 @@
-from asyncio import sleep
+from celery.result import AsyncResult
 from fastapi import BackgroundTasks, Body, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from typing_extensions import Annotated
 from app.core import config
 from fastapi import APIRouter, Depends
 
-from app.db.modals import TaskOut
-from app.dependencies import get_token_header
-from app.tasks.celery_worker import celery, dummy_task
-from app.utils import _to_task_out
+from app.worker import create_task
 
 router = APIRouter(
     prefix="/api",
@@ -31,11 +27,18 @@ def fetch_settings(settings: Annotated[config.Settings, Depends(config.get_setti
     return JSONResponse({"app_name": settings.app_name })
 
 @router.post("/tasks", status_code=201)
-def celery_task()-> TaskOut:
-    res = dummy_task.delay()
-    return TaskOut(id=res.task_id, status=res.status)
+def run_task(payload = Body(...)):
+    task_type = payload["type"]
+    task = create_task.delay(int(task_type))
+    return JSONResponse({"task_id": task.id})
 
-@router.get("/tasks", status_code=200)
-def get_status(task_id:str)->TaskOut:
-    res = celery.AsyncResult(task_id)
-    return _to_task_out(res)
+
+@router.get("/tasks/{task_id}")
+def get_status(task_id):
+    task_result = AsyncResult(task_id)
+    result = {
+        "task_id": task_id,
+        "task_status": task_result.status,
+        "task_result": task_result.result
+    }
+    return JSONResponse(result)
