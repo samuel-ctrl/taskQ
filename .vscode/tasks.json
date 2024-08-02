@@ -1,33 +1,42 @@
 {
-	"version": "2.0.0",
-	"tasks": [
+    "version": "2.0.0",
+    "tasks": [
 		{
-			"type": "docker-build",
-			"label": "docker-build",
-			"platform": "python",
-			"dockerBuild": {
-				"tag": "taskq:latest",
-				"dockerfile": "${workspaceFolder}/Dockerfile",
-				"context": "${workspaceFolder}",
-				"pull": true
-			}
-		},
-		{
-			"type": "docker-run",
-			"label": "docker-run: debug",
-			"dependsOn": [
-				"docker-build"
-			],
-			"python": {
-				"args": [
-					"app.main:app",
-					"--host",
-					"0.0.0.0",
-					"--port",
-					"8000"
-				],
-				"module": "uvicorn"
-			}
-		}
-	]
+            "label": "docker-compose up",
+            "type": "shell",
+            "command": "docker-compose up -d --build",
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose down",
+            "type": "shell",
+            "command": "docker-compose down",
+            "problemMatcher": []
+        },
+        {
+            "label": "start-redis-container",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+              "run",
+              "-d",
+              "--name",
+              "redis",
+              "-p",
+              "6379:6379",
+              "redis:latest"
+            ],
+          },
+          {
+            "label": "stop-redis-container",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+              "rm",
+              "-f",
+              "redis"
+            ],
+          }
+
+    ]
 }

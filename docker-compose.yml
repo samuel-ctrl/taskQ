@@ -1,44 +1,71 @@
 version: '3.8'
 
 services:
-
-  web:
-    build: ./app
+  fastapi:
+    build:
+      context: .
+      dockerfile: app.dockerfile
     ports:
-      - 8004:8000
-    command: uvicorn main:app --host 0.0.0.0 --reload
+      - "8000:8000"
     volumes:
       - .:/app
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - redis
 
-  worker:
-    build: ./app
-    command: celery -A worker.celery worker --loglevel=info --logfile=logs/celery.log
+  celery:
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
     volumes:
       - .:/app
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - "5678:5678"
     depends_on:
-      - web
       - redis
 
   redis:
-    image: redis:7
-
-  dashboard:
-    build: ./app
-    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    image: redis:alpine
     ports:
-      - 5556:5555
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - web
-      - redis
-      - worker
+      - "6379:6379"
+
+
+
+# services:
+#   taskq:
+#     image: taskq
+#     build:
+#       context: .
+#       dockerfile: app.dockerfile
+#     ports:
+#       - 8000:8000
+
+#   redis:
+#     image: redis:alpine
+#     restart: always
+#     ports:
+#       - "6380:6379"
+
+#   celery:
+#     build:
+#       context: .
+#       dockerfile: celery_worker.dockerfile
+#     restart: always
+#     environment:
+#       - CELERY_BROKER_URL=redis://redis:6379/0
+#       - CELERY_BROKER_URL="redis://redis:6379/0"
+#       - CELERY_RESULT_BACKEND="redis://redis:6379/0"
+#     volumes:
+#       - ./app:/app
+#     ports:
+#       - "5682:5679"
+#     depends_on:
+#       - redis
+
+#   flower:
+#     image: mher/flower:1.2
+#     environment:
+#       - CELERY_BROKER_URL=redis://redis:6379/0
+#     restart: always
+#     ports:
+#       - 5555:5555
+#     depends_on:
+#       - celery
+#       - redis
